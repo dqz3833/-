@@ -1,0 +1,33 @@
+name: Probe Fenbi position API
+
+on:
+  push:
+    paths:
+      - "scripts/probe_fenbi_api.py"
+      - ".github/workflows/probe-fenbi-api.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install requests
+      - run: python scripts/probe_fenbi_api.py
+      - name: Print report
+        if: always()
+        run: cat build/fenbi_api_probe/probe_report.json || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fenbi-api-probe
+          path: build/fenbi_api_probe/
+          if-no-files-found: warn
+          retention-days: 7
