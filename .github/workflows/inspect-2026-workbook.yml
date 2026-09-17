@@ -1,0 +1,20 @@
+name: Inspect 2026 national workbook
+on:
+  push:
+    paths:
+      - "scripts/inspect_2026_workbook.py"
+      - ".github/workflows/inspect-2026-workbook.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install pandas openpyxl xlrd requests
+      - run: python scripts/inspect_2026_workbook.py
