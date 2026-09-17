@@ -1,0 +1,35 @@
+name: Build joint institution core
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/build_joint_core.py.gz.b64'
+      - '.github/workflows/build-joint-institution-core.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Decode builder
+        run: base64 -d scripts/build_joint_core.py.gz.b64 | gzip -d > scripts/build_joint_core.py
+      - name: Build database
+        run: python scripts/build_joint_core.py 2>&1 | tee build-joint.log
+      - name: Upload database
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: institution-joint-core-2024-2026
+          path: |
+            build_joint/institution_joint_core_2024_2026.zip
+            build_joint/manifest.json
+            build-joint.log
+          retention-days: 7
+          compression-level: 0
