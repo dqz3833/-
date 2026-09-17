@@ -1,0 +1,45 @@
+name: Build all provincial API core
+
+on:
+  push:
+    paths:
+      - "scripts/build_all_provincial_api_core.py"
+      - ".github/workflows/build-all-provincial-api-core.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install requests
+      - name: Build provincial core
+        run: python scripts/build_all_provincial_api_core.py
+      - name: Print manifest summary
+        if: always()
+        run: |
+          find build/provincial_api_core -type f -printf '%p %s bytes\n' || true
+          python - <<'PY'
+          import json,pathlib
+          p=pathlib.Path('build/provincial_api_core/provincial_core_manifest.json')
+          if p.exists():
+              d=json.loads(p.read_text())
+              print(json.dumps({'totals':d.get('totals'),'database_bytes':d.get('database_bytes'),'sha256':d.get('database_sha256')},ensure_ascii=False,indent=2))
+              for x in d.get('exams',[]):
+                  if x.get('status')!='complete': print('NON_COMPLETE',x)
+          PY
+      - name: Upload artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: provincial-civil-service-core-2024-2026
+          path: build/provincial_api_core/
+          if-no-files-found: warn
+          retention-days: 30
