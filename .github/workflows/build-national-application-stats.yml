@@ -1,0 +1,31 @@
+name: Build national application stats
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/build_national_application_stats.py'
+      - '.github/workflows/build-national-application-stats.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install requests beautifulsoup4 lxml
+      - run: python scripts/build_national_application_stats.py 2>&1 | tee national-application.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: national-application-stats-2024-2026
+          path: |
+            build/national_application_stats/national_application_stats_2024_2026.sqlite
+            build/national_application_stats/national_application_stats_2024_2026.csv
+            build/national_application_stats/manifest.json
+            national-application.log
+          retention-days: 7
+          compression-level: 0
