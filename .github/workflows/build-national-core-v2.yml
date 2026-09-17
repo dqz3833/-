@@ -1,0 +1,37 @@
+name: Build national core database V2
+
+on:
+  push:
+    paths:
+      - "scripts/build_national_core_v2.py"
+      - ".github/workflows/build-national-core-v2.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install pandas openpyxl xlrd requests
+      - name: Build corrected database
+        run: python scripts/build_national_core_v2.py
+      - name: Print manifest
+        if: always()
+        run: |
+          find build/national_v2 -maxdepth 2 -type f -printf '%p %s bytes\n' || true
+          cat build/national_v2/national_core_v2_manifest.json || true
+      - name: Upload artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: national-core-v2-2024-2026
+          path: build/national_v2/
+          if-no-files-found: warn
+          retention-days: 30
