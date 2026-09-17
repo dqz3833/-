@@ -1,0 +1,43 @@
+name: Inspect Fenbi position endpoints
+
+on:
+  push:
+    paths:
+      - "scripts/inspect_fenbi_positions.py"
+      - ".github/workflows/inspect-fenbi-positions.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install requests beautifulsoup4 lxml
+      - run: python scripts/inspect_fenbi_positions.py
+      - name: Show report excerpts
+        if: always()
+        run: |
+          find build/fenbi_inspect -type f -printf '%p %s bytes\n' || true
+          python - <<'PY'
+          import json, pathlib
+          p=pathlib.Path('build/fenbi_inspect/fenbi_endpoint_report.json')
+          if p.exists():
+              d=json.loads(p.read_text())
+              print('pages', d.get('pages'))
+              print('scripts', len(d.get('scripts',[])))
+              for x in d.get('candidates',[])[:500]: print(x)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fenbi-position-endpoint-inspection
+          path: build/fenbi_inspect/
+          if-no-files-found: warn
+          retention-days: 7
