@@ -1,0 +1,37 @@
+name: Build provincial V2 pilot
+
+on:
+  push:
+    paths:
+      - "scripts/build_provincial_job_db_v2.py"
+      - ".github/workflows/build-provincial-v2-pilot.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-ah:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install requests beautifulsoup4 lxml
+      - name: Build Anhui 2024-2026
+        run: python scripts/build_provincial_job_db_v2.py --province ah --workers 8
+      - name: Show manifest
+        if: always()
+        run: |
+          find build/provincial_v2/ah -type f -printf '%p %s bytes\n' || true
+          cat build/provincial_v2/ah/provincial_ah_manifest.json || true
+      - name: Upload artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: provincial-v2-ah-2024-2026
+          path: build/provincial_v2/ah/
+          if-no-files-found: warn
+          retention-days: 30
