@@ -1,0 +1,29 @@
+name: Probe joint exam query API
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/probe_joint_exam_query.py'
+      - '.github/workflows/probe-joint-exam-query.yml'
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install requests
+      - run: python scripts/probe_joint_exam_query.py 2>&1 | tee joint-query.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: joint-exam-query-probe
+          path: |
+            build/joint_exam_query_probe
+            joint-query.log
+          retention-days: 7
+          compression-level: 0
