@@ -1,0 +1,31 @@
+name: Build national entry scores
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/build_national_entry_scores.py'
+      - '.github/workflows/build-national-entry-scores.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install requests pandas openpyxl xlrd
+      - run: python scripts/build_national_entry_scores.py 2>&1 | tee national-entry-scores.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: national-entry-scores-2024-2026
+          path: |
+            build/national_entry_scores/national_entry_scores_2024_2026.sqlite
+            build/national_entry_scores/national_entry_scores_2024_2026.csv
+            build/national_entry_scores/manifest.json
+            national-entry-scores.log
+          retention-days: 7
+          compression-level: 0
