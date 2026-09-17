@@ -41,3 +41,5 @@ jobs:
           path: build/fenbi_inspect/
           if-no-files-found: warn
           retention-days: 7
+
+# Trigger marker: endpoint discovery run
