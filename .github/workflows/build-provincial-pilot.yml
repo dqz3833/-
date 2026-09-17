@@ -1,0 +1,43 @@
+name: Build provincial job database pilot
+
+on:
+  push:
+    paths:
+      - "scripts/build_provincial_job_db.py"
+      - ".github/workflows/build-provincial-pilot.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        province: [ah, bj, sc]
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4 lxml
+      - name: Build ${{ matrix.province }}
+        run: python scripts/build_provincial_job_db.py --province "${{ matrix.province }}" --workers 6
+      - name: Show manifest
+        if: always()
+        run: |
+          find build/provincial/${{ matrix.province }} -type f -printf '%p %s bytes\n' || true
+          cat build/provincial/${{ matrix.province }}/provincial_${{ matrix.province }}_manifest.json || true
+      - name: Upload artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: provincial-${{ matrix.province }}-2024-2026
+          path: build/provincial/${{ matrix.province }}/
+          if-no-files-found: warn
+          retention-days: 30
