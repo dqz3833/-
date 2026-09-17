@@ -35,3 +35,5 @@ jobs:
           path: build/provincial_v2/ah/
           if-no-files-found: warn
           retention-days: 30
+
+# Trigger marker: corrected area/year discovery
